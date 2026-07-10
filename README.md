@@ -1,7 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="Googol Android" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
 # 🛸 Googol
 
 **The search engine you know or love, but... not quite right.**
@@ -24,17 +20,14 @@ After a successful tenure as a TypeScript-driven web engine (see [Googol-Legacy]
 Currently, the "mainframe" is in a state of professional emptiness. It is a highly optimized canvas awaiting development:
 
 - `app/src/main/java/` : The birthplace of future search logic and Compose UI.
-- `build.gradle.kts` : Dependency management for the AI-powered search backend.
-- `.env` : Where the API secrets live (not quite right without them).
+- `build.gradle.kts` : Build configuration and dependency management for the native Android engine.
 
 ---
 
-## 🚀 Getting Started (Experimental)
+## 🚀 Getting Started
 
 **Prerequisites:**  [Android Studio Ladybug+](https://developer.android.com/studio)
 
 1.  **Initialize the Matrix**: Clone the repository to your local development environment.
-2.  **Authentication**: Create a `.env` file in the root and provide your `GEMINI_API_KEY`.
+2.  **Open Project**: Import the project into Android Studio.
 3.  **Deploy**: Run the app on a physical device or emulator to witness the initial boot sequence.
-
-*Managed via AI Studio: [Interface Link](https://ai.studio/apps/65dc3106-0ec9-4b4b-b044-47d6550c9b75)*
