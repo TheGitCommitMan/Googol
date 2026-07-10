@@ -100,6 +100,13 @@ class GoogolViewModel : ViewModel() {
     private val _activeGSuiteApp = MutableStateFlow(GSuiteApp.NONE)
     val activeGSuiteApp: StateFlow<GSuiteApp> = _activeGSuiteApp.asStateFlow()
 
+    // Real System Settings Values (satisfying "replace it with real settings" and "make it less fucking bright")
+    var isDarkMode = mutableStateOf(true) // Defaults to true to make it eye-safe on start!
+    var safeSearchMode = mutableStateOf("Strict") // Options: Strict, Moderate, Off
+    var searchRegion = mutableStateOf("Delaware Sandbox") // Options: United States, Delaware Sandbox, International
+    var showDiscoverFeed = mutableStateOf(true)
+    var resultsPerPage = mutableStateOf(10f) // Slider from 5 to 50
+
     // System Setting Values
     var brightness = mutableStateOf(90f)
     var volume = mutableStateOf(80f)
@@ -321,11 +328,14 @@ fun GoogolAppMain() {
     val currentTab by viewModel.currentTab.collectAsState()
     val activeGSuiteApp by viewModel.activeGSuiteApp.collectAsState()
     val context = LocalContext.current
+    val isDark by remember { viewModel.isDarkMode }
+    val appBg = if (isDark) Color(0xFF0F172A) else Color(0xFFF3F6FC)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             GoogolBottomBar(
+                viewModel = viewModel,
                 currentTab = currentTab,
                 onTabSelected = { tab ->
                     viewModel.setTab(tab)
@@ -336,7 +346,7 @@ fun GoogolAppMain() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF3F6FC)) // Elegant modern Sleek Interface background
+                .background(appBg)
                 .padding(innerPadding)
         ) {
             Crossfade(targetState = currentTab, label = "ScreenTransition") { tab ->
@@ -391,11 +401,18 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
         }
     )
 
+    val isDark by remember { viewModel.isDarkMode }
+    val homeBg = if (isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC)
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF8FAFC)), // Warm eye-safe elegant background
+                .background(homeBg),
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(top = 12.dp, bottom = 80.dp)
         ) {
@@ -413,8 +430,8 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         modifier = Modifier
                             .clickable { showWeatherDialog = true },
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                        border = BorderStroke(1.dp, cardBorder)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -431,7 +448,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                                 text = "Sunny • 72°F",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B)
+                                color = textColor
                             )
                         }
                     }
@@ -494,8 +511,9 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .shadow(4.dp, shape = RoundedCornerShape(28.dp)),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(28.dp)
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                    shape = RoundedCornerShape(28.dp),
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Row(
                         modifier = Modifier
@@ -516,11 +534,13 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         TextField(
                             value = query,
                             onValueChange = { query = it },
-                            placeholder = { Text("Search or type URL...", color = Color(0xFF64748B), fontSize = 14.sp) },
+                            placeholder = { Text("Search or type URL...", color = textSecondary, fontSize = 14.sp) },
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("search_input"),
                             colors = TextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
                                 disabledContainerColor = Color.Transparent,
@@ -810,7 +830,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         }
                     }
                 }
-            } else {
+            } else if (viewModel.showDiscoverFeed.value) {
                 // --- DISCOVER FEED SECTION ---
                 item {
                     Row(
@@ -832,11 +852,11 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                                 text = "Discover",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 16.sp,
-                                color = Color(0xFF1E293B)
+                                color = textColor
                             )
                         }
                         IconButton(onClick = { Toast.makeText(context, "Discover feed preferences", Toast.LENGTH_SHORT).show() }) {
-                            Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings", tint = Color.Gray)
+                            Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings", tint = textSecondary)
                         }
                     }
                 }
@@ -853,6 +873,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         isLiked = isCardLiked[1] ?: false,
                         coverGradient = listOf(Color(0xFFEFF6FF), Color(0xFFDBEAFE)),
                         graphicType = "android",
+                        isDark = isDark,
                         onLikeClicked = {
                             val liked = isCardLiked[1] ?: false
                             isCardLiked[1] = !liked
@@ -879,6 +900,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         isLiked = isCardLiked[2] ?: false,
                         coverGradient = listOf(Color(0xFFFEF3C7), Color(0xFFFDE68A)),
                         graphicType = "finance",
+                        isDark = isDark,
                         onLikeClicked = {
                             val liked = isCardLiked[2] ?: false
                             isCardLiked[2] = !liked
@@ -905,6 +927,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         isLiked = isCardLiked[3] ?: false,
                         coverGradient = listOf(Color(0xFFECFDF5), Color(0xFFD1FAE5)),
                         graphicType = "leak",
+                        isDark = isDark,
                         onLikeClicked = {
                             val liked = isCardLiked[3] ?: false
                             isCardLiked[3] = !liked
@@ -931,6 +954,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         isLiked = isCardLiked[4] ?: false,
                         coverGradient = listOf(Color(0xFFFAF5FF), Color(0xFFF3E8FF)),
                         graphicType = "analysis",
+                        isDark = isDark,
                         onLikeClicked = {
                             val liked = isCardLiked[4] ?: false
                             isCardLiked[4] = !liked
@@ -1388,16 +1412,22 @@ fun DiscoverCard(
     isLiked: Boolean,
     coverGradient: List<Color>,
     graphicType: String,
+    isDark: Boolean = false,
     onLikeClicked: () -> Unit,
     onShareClicked: () -> Unit
 ) {
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+        border = BorderStroke(1.dp, cardBorder)
     ) {
         Column {
             // Editorial Visual Header Graphic
@@ -1468,7 +1498,7 @@ fun DiscoverCard(
                             text = "$publisher • $timeStr",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF64748B)
+                            color = textSecondary
                         )
                     }
 
@@ -1485,21 +1515,21 @@ fun DiscoverCard(
                     text = title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = Color(0xFF1E293B),
+                    color = textColor,
                     lineHeight = 20.sp
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = description,
                     fontSize = 12.sp,
-                    color = Color(0xFF475569),
+                    color = textSecondary,
                     lineHeight = 17.sp,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = Color(0xFFF1F5F9))
+                HorizontalDivider(color = cardBorder)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
@@ -1526,7 +1556,7 @@ fun DiscoverCard(
                             text = "$likesCount likes",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isLiked) Color(0xFFEA4335) else Color(0xFF475569)
+                            color = if (isLiked) Color(0xFFEA4335) else textSecondary
                         )
                     }
 
@@ -2441,64 +2471,368 @@ fun CodeViewerScreen(viewModel: GoogolViewModel, context: Context) {
 // --- SETTINGS SCREEN ---
 @Composable
 fun SettingsScreen(viewModel: GoogolViewModel) {
-    var bright by viewModel.brightness
-    var vol by viewModel.volume
-    var bat by viewModel.battery
+    val isDark by remember { viewModel.isDarkMode }
+    var safeSearch by remember { viewModel.safeSearchMode }
+    var region by remember { viewModel.searchRegion }
+    var showFeed by remember { viewModel.showDiscoverFeed }
+    var resultsCount by remember { viewModel.resultsPerPage }
 
-    Column(
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, Color(0xFFE0E0E0))
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Android System Hardware Profiles", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(12.dp))
+        // --- REAL GOOGOL SEARCH SETTINGS CARD ---
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, cardBorder)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Search Settings & Customization",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = textColor
+                    )
 
-                SettingsItem("Host container info", "Google AI Studio Developer Sandbox")
-                SettingsItem("Model Signature", "Googol Pixel 8 Pro Core Target")
-                SettingsItem("Active Memory Allocation", "12 GB RAM / Android API 36")
-                SettingsItem("Device connection socket", "localhost:5037")
+                    // 1. Dark Mode / Night Mode Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Dark Theme (Night Mode)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = textColor)
+                            Text("Use an eye-safe, high-contrast dark aesthetic", fontSize = 11.sp, color = textSecondary)
+                        }
+                        Switch(
+                            checked = isDark,
+                            onCheckedChange = { viewModel.isDarkMode.value = it }
+                        )
+                    }
+
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.5f))
+
+                    // 2. Discover Feed Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Show Discover Feed", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = textColor)
+                            Text("Display curated articles and leaks on the home screen", fontSize = 11.sp, color = textSecondary)
+                        }
+                        Switch(
+                            checked = showFeed,
+                            onCheckedChange = { viewModel.showDiscoverFeed.value = it }
+                        )
+                    }
+
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.5f))
+
+                    // 3. SafeSearch Filter Selector
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("SafeSearch Filtering", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = textColor)
+                        Text("Filter adult content from your organic search index", fontSize = 11.sp, color = textSecondary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("Strict", "Moderate", "Off").forEach { mode ->
+                                val selected = safeSearch == mode
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { viewModel.safeSearchMode.value = mode },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (selected) Color(0xFF1A73E8) else cardBg.copy(alpha = 0.3f)
+                                    ),
+                                    border = BorderStroke(1.dp, if (selected) Color(0xFF1A73E8) else cardBorder)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = mode,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = if (selected) Color.White else textColor
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.5f))
+
+                    // 4. Region Selection
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Search Index Region", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = textColor)
+                        Text("Select the regional database server to crawl", fontSize = 11.sp, color = textSecondary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("Delaware Sandbox", "United States", "International").forEach { reg ->
+                                val selected = region == reg
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { viewModel.searchRegion.value = reg },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (selected) Color(0xFF34A853) else cardBg.copy(alpha = 0.3f)
+                                    ),
+                                    border = BorderStroke(1.dp, if (selected) Color(0xFF34A853) else cardBorder)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = when (reg) {
+                                                "Delaware Sandbox" -> "Delaware"
+                                                "United States" -> "USA"
+                                                else -> "Global"
+                                            },
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = if (selected) Color.White else textColor
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.5f))
+
+                    // 5. Results per page Slider
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Organic Results Per Query", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = textColor)
+                                Text("Adjust crawl index depth limit", fontSize = 11.sp, color = textSecondary)
+                            }
+                            Text(
+                                text = "${resultsCount.toInt()} list",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1A73E8)
+                            )
+                        }
+                        Slider(
+                            value = resultsCount,
+                            onValueChange = { viewModel.resultsPerPage.value = it },
+                            valueRange = 5f..50f,
+                            steps = 8
+                        )
+                    }
+                }
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, Color(0xFFE0E0E0))
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("System Slider Adjustments", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Screen Brightness", fontSize = 12.sp, color = Color.Gray)
-                        Text("${bright.toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        // --- GOOGOL HISTORICAL RELEASE NOTES CARD ---
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, cardBorder)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Changelog History",
+                            tint = Color(0xFF1A73E8),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Historical Patch Notes",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = textColor
+                        )
                     }
-                    Slider(value = bright, onValueChange = { bright = it }, valueRange = 10f..100f)
-                }
 
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Speaker Audio Stream", fontSize = 12.sp, color = Color.Gray)
-                        Text("${vol.toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Slider(value = vol, onValueChange = { vol = it }, valueRange = 0f..100f)
-                }
+                    Text(
+                        text = "Chronological archive of the Googol search and simulation platform updates going back to ages.",
+                        fontSize = 11.sp,
+                        color = textSecondary
+                    )
 
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Simulated Battery Reserve", fontSize = 12.sp, color = Color.Gray)
-                        Text("${bat.toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.5f))
+
+                    // Version 1.4.0
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Googol v1.4.0", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
+                            Text("May 22, 2026 12:00 UTC", fontSize = 10.sp, color = textSecondary)
+                        }
+                        Text(
+                            text = "Platform Shift:",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = textColor,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                        val v140PlatformNotes = listOf(
+                            "Converted Googol into a fully fledged Native Android codebase located in /android.",
+                            "Implemented an interactive High-Fidelity Android Phone Simulator inside the web app.",
+                            "Added real-time Android notification status bar, quick settings panel, lock screen, and physical side buttons (volume slider, power toggle).",
+                            "Added a custom Developer IDE App within the android emulator to view/copy the Kotlin/Compose source code."
+                        )
+                        v140PlatformNotes.forEach { note ->
+                            Row(modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 2.dp)) {
+                                Text("•", fontSize = 11.sp, color = Color(0xFF1A73E8), modifier = Modifier.padding(end = 6.dp))
+                                Text(note, fontSize = 11.sp, color = textSecondary, lineHeight = 15.sp)
+                            }
+                        }
+
+                        Text(
+                            text = "Workspace Apps Overhaul:",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = textColor,
+                            modifier = Modifier.padding(start = 4.dp, top = 6.dp)
+                        )
+                        val v140WorkspaceNotes = listOf(
+                            "Gmail App: Added dynamic message list, read/unread states, secure server syncing simulation.",
+                            "Drive App: Restructured with multiple file types and folder browsing support.",
+                            "Docs App: Full inline live markdown document editing canvas.",
+                            "Sheets App: Interactive spreadsheet grid with automatic coordinate tracking.",
+                            "Calendar App: Modern event planner to add meetings and set alarm reminders.",
+                            "Meet App: Virtual video room with live webcam video feeds and mock audio visualizer grids."
+                        )
+                        v140WorkspaceNotes.forEach { note ->
+                            Row(modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 2.dp)) {
+                                Text("•", fontSize = 11.sp, color = Color(0xFF1A73E8), modifier = Modifier.padding(end = 6.dp))
+                                Text(note, fontSize = 11.sp, color = textSecondary, lineHeight = 15.sp)
+                            }
+                        }
                     }
-                    Slider(value = bat, onValueChange = { bat = it }, valueRange = 0f..100f)
+
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.3f))
+
+                    // Version 1.3.1
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Googol v1.3.1", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
+                            Text("Mar 23, 2026 07:32 UTC", fontSize = 10.sp, color = textSecondary)
+                        }
+                        Text(
+                            text = "Fixes:",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = textColor,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                        val v131Notes = listOf(
+                            "Fixed footer links for 'Advertising', 'Business', and 'How Search works' to point to dedicated pages.",
+                            "Added a 'How Search works' page with a detailed breakdown of our process.",
+                            "Implemented automatic scroll-to-top when navigating between pages."
+                        )
+                        v131Notes.forEach { note ->
+                            Row(modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 2.dp)) {
+                                Text("•", fontSize = 11.sp, color = Color(0xFF34A853), modifier = Modifier.padding(end = 6.dp))
+                                Text(note, fontSize = 11.sp, color = textSecondary, lineHeight = 15.sp)
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = cardBorder.copy(alpha = 0.3f))
+
+                    // Version 1.3.0
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Googol v1.3.0", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
+                            Text("Mar 23, 2026 07:30 UTC", fontSize = 10.sp, color = textSecondary)
+                        }
+                        Text(
+                            text = "Features:",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = textColor,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                        val v130Features = listOf(
+                            "Added a dedicated 'About' page explaining Googol's mission.",
+                            "Implemented 'Googol Workspace' (GSuite) simulation with 12 mock apps.",
+                            "Made all footer links and search icons functional.",
+                            "Added humorous 'Googol-style' alerts for non-implemented features."
+                        )
+                        v130Features.forEach { note ->
+                            Row(modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 2.dp)) {
+                                Text("•", fontSize = 11.sp, color = Color(0xFFEA4335), modifier = Modifier.padding(end = 6.dp))
+                                Text(note, fontSize = 11.sp, color = textSecondary, lineHeight = 15.sp)
+                            }
+                        }
+
+                        Text(
+                            text = "UI/UX:",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = textColor,
+                            modifier = Modifier.padding(start = 4.dp, top = 6.dp)
+                        )
+                        val v130UiNotes = listOf(
+                            "Integrated Grid icon navigation to Workspace.",
+                            "Updated footer with active navigation links.",
+                            "Improved AI Overview with a streaming cursor effect."
+                        )
+                        v130UiNotes.forEach { note ->
+                            Row(modifier = Modifier.padding(start = 12.dp, top = 2.dp, bottom = 2.dp)) {
+                                Text("•", fontSize = 11.sp, color = Color(0xFFEA4335), modifier = Modifier.padding(end = 6.dp))
+                                Text(note, fontSize = 11.sp, color = textSecondary, lineHeight = 15.sp)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2678,44 +3012,58 @@ fun VoiceVisualizer() {
 
 // --- NAVIGATION BOTTOM BAR ---
 @Composable
-fun GoogolBottomBar(currentTab: Tab, onTabSelected: (Tab) -> Unit) {
+fun GoogolBottomBar(viewModel: GoogolViewModel, currentTab: Tab, onTabSelected: (Tab) -> Unit) {
+    val isDark by remember { viewModel.isDarkMode }
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = if (isDark) Color(0xFF0F172A) else Color.White,
         tonalElevation = 8.dp
     ) {
+        val navItemColors = NavigationBarItemDefaults.colors(
+            selectedIconColor = Color.White,
+            selectedTextColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1A73E8),
+            indicatorColor = Color(0xFF1A73E8),
+            unselectedIconColor = if (isDark) Color(0xFF94A3B8) else Color.Gray,
+            unselectedTextColor = if (isDark) Color(0xFF94A3B8) else Color.Gray
+        )
+
         NavigationBarItem(
             selected = currentTab == Tab.HOME,
             onClick = { onTabSelected(Tab.HOME) },
             icon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Search") },
-            label = { Text("Search", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            label = { Text("Search", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+            colors = navItemColors
         )
 
         NavigationBarItem(
             selected = currentTab == Tab.WORKSPACE,
             onClick = { onTabSelected(Tab.WORKSPACE) },
             icon = { Icon(imageVector = Icons.Default.Apps, contentDescription = "GSuite Workspace") },
-            label = { Text("GSuite", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            label = { Text("GSuite", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+            colors = navItemColors
         )
 
         NavigationBarItem(
             selected = currentTab == Tab.DIAGNOSTIC,
             onClick = { onTabSelected(Tab.DIAGNOSTIC) },
             icon = { Icon(imageVector = Icons.Default.Shield, contentDescription = "Diagnostic Quiz") },
-            label = { Text("Audit", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            label = { Text("Audit", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+            colors = navItemColors
         )
 
         NavigationBarItem(
             selected = currentTab == Tab.CODE,
             onClick = { onTabSelected(Tab.CODE) },
             icon = { Icon(imageVector = Icons.Default.Code, contentDescription = "Kotlin Code") },
-            label = { Text("Src Code", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            label = { Text("Src Code", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+            colors = navItemColors
         )
 
         NavigationBarItem(
             selected = currentTab == Tab.SETTINGS,
             onClick = { onTabSelected(Tab.SETTINGS) },
             icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings") },
-            label = { Text("Settings", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            label = { Text("Settings", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+            colors = navItemColors
         )
     }
 }
