@@ -1,33 +1,21 @@
-# 🛸 Googol
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-**The search engine you know or love, but... not quite right.**
+# Run and deploy your AI Studio app
 
-Welcome to the future of search, or at least a very high-fidelity mobile approximation of it. **Googol** has officially shed its legacy web shell and transitioned into a high-performance, native Android environment. 
+This contains everything you need to run your app locally.
 
-This repository marks the "Zero-Hour" phase: a clean, professional Kotlin/Jetpack Compose architecture primed for the next generation of slightly-off-center information retrieval.
+View your app in AI Studio: https://ai.studio/apps/65dc3106-0ec9-4b4b-b044-47d6550c9b75
 
----
+## Run Locally
 
-## 🛠️ The Transition: Web to Kotlin
-After a successful tenure as a TypeScript-driven web engine (see [Googol-Legacy](https://github.com/TheGitCommitMan/Googol-Legacy)), the core logic is being re-engineered for mobile.
-*   **Language**: 100% Kotlin—because search results should be concise and type-safe.
-*   **UI Framework**: Jetpack Compose—declarative search bars for a declarative world.
-*   **Architecture**: Material 3—sleek, modern, and just authoritative enough to be convincing.
+**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
 
----
 
-## 📂 Project Structure (Phase: Initial Shell)
-Currently, the "mainframe" is in a state of professional emptiness. It is a highly optimized canvas awaiting development:
-
-- `app/src/main/java/` : The birthplace of future search logic and Compose UI.
-- `build.gradle.kts` : Build configuration and dependency management for the native Android engine.
-
----
-
-## 🚀 Getting Started
-
-**Prerequisites:**  [Android Studio Ladybug+](https://developer.android.com/studio)
-
-1.  **Initialize the Matrix**: Clone the repository to your local development environment.
-2.  **Open Project**: Import the project into Android Studio.
-3.  **Deploy**: Run the app on a physical device or emulator to witness the initial boot sequence.
+1. Open Android Studio
+2. Select **Open** and choose the directory containing this project
+3. Allow Android Studio to fix any incompatibilities as it imports the project.
+4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
+5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
+6. Run the app on an emulator or physical device

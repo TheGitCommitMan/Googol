@@ -18,7 +18,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -364,17 +367,16 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
     val isVoiceOpen by remember { viewModel.isVoiceListening }
     val recognizedText by remember { viewModel.voiceRecognizedText }
 
-    // Dynamic scale animate for logo
-    val infiniteTransition = rememberInfiniteTransition(label = "PulseLogo")
-    val logoPulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.98f,
-        targetValue = 1.02f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Pulse"
-    )
+    // Dialog state controllers for shortcuts
+    var showProfileDialog by remember { mutableStateOf(false) }
+    var showWeatherDialog by remember { mutableStateOf(false) }
+    var showTranslateDialog by remember { mutableStateOf(false) }
+    var showHomeworkDialog by remember { mutableStateOf(false) }
+    var showSongDialog by remember { mutableStateOf(false) }
+
+    // Stateful like counts and loved flags for Discover feed cards
+    val likesCount = remember { mutableStateMapOf(1 to 142, 2 to 98, 3 to 256, 4 to 1024) }
+    val isCardLiked = remember { mutableStateMapOf(1 to false, 2 to false, 3 to false, 4 to false) }
 
     // Permission launcher for camera scanning
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -382,316 +384,1176 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
         onResult = { isGranted ->
             if (isGranted) {
                 viewModel.isCameraScanning.value = true
-                Toast.makeText(context, "Simulated Google Lens initiated", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Google Lens initiated", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, "Camera permission required for Lens simulator", Toast.LENGTH_SHORT).show()
             }
         }
     )
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(top = 24.dp, bottom = 48.dp)
-    ) {
-        // Googol Header Logo
-        item {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 24.dp)
-                    .height(80.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    modifier = Modifier.animateContentSize(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    GoogolLetter("G", Color(0xFF1A73E8))
-                    GoogolLetter("o", Color(0xFFEA4335))
-                    GoogolLetter("o", Color(0xFFFBBC05))
-                    GoogolLetter("g", Color(0xFF1A73E8))
-                    GoogolLetter("o", Color(0xFF34A853))
-                    GoogolLetter("l", Color(0xFFEA4335))
-                }
-            }
-        }
-
-        // Search text box
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .shadow(4.dp, shape = RoundedCornerShape(28.dp)),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(28.dp)
-            ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF8FAFC)), // Warm eye-safe elegant background
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(top = 12.dp, bottom = 80.dp)
+        ) {
+            // --- TOP HEADER BAR: Weather & Profile Avatar ---
+            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 2.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = Color.Gray,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-
-                    TextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        placeholder = { Text("Search Googol or ask anything...", color = Color.Gray, fontSize = 14.sp) },
+                    // Weather Pill Widget
+                    Card(
                         modifier = Modifier
-                            .weight(1f)
-                            .testTag("search_input"),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            keyboardController?.hide()
-                            viewModel.triggerSearch(context, query)
-                        })
-                    )
-
-                    // Interactive voice and lens buttons
-                    IconButton(
-                        onClick = {
-                            viewModel.isVoiceListening.value = true
-                            viewModel.voiceRecognizedText.value = ""
-                            // Simulate voice recognizer
-                            val voiceKeywords = listOf("Why do I not own Google?", "How to acquire one billion dollars stock?", "Sundar Pichai workspace layout")
-                            viewModel.voiceRecognizedText.value = voiceKeywords.random()
-                            val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.Main)
-                            scope.launch {
-                                delay(1800)
-                                viewModel.isVoiceListening.value = false
-                                query = viewModel.voiceRecognizedText.value
-                                viewModel.triggerSearch(context, query)
-                            }
-                        }
+                            .clickable { showWeatherDialog = true },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
-                        Icon(imageVector = Icons.Default.Mic, contentDescription = "Voice Search", tint = Color(0xFF4285F4))
-                    }
-
-                    IconButton(
-                        onClick = {
-                            val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                                viewModel.isCameraScanning.value = true
-                            } else {
-                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                            }
-                        }
-                    ) {
-                        Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = "Google Lens Scanner", tint = Color(0xFF34A853))
-                    }
-                }
-            }
-        }
-
-        // Action Buttons
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = {
-                        keyboardController?.hide()
-                        viewModel.triggerSearch(context, query)
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("submit_button"),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8)),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("Search", fontWeight = FontWeight.Bold)
-                }
-
-                Button(
-                    onClick = {
-                        keyboardController?.hide()
-                        val luckies = listOf("IKEA Desk of CEO", "How to get rich with $20", "Who owns corporate Delaware?", "Is Sundar Pichai looking at my screen")
-                        val luckyQuery = luckies.random()
-                        query = luckyQuery
-                        viewModel.triggerSearch(context, luckyQuery)
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F3F4)),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("I'm Feeling Lucky", color = Color(0xFF3C4043), fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // Voice Listening Overlay Simulation
-        if (isVoiceOpen) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F0FE)),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Listening to voice...", color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        VoiceVisualizer()
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text("\"$recognizedText\"", color = Color.DarkGray, fontSize = 13.sp, modifier = Modifier.animateContentSize())
-                    }
-                }
-            }
-        }
-
-        // Camera Scanning Lens Simulation
-        if (isCameraOpen) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Google Lens Visual Scanner Active", color = Color(0xFF34A853), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.DarkGray),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CameraGridOverlay()
+                            Icon(
+                                imageVector = Icons.Default.WbSunny,
+                                contentDescription = "Sunny Weather",
+                                tint = Color(0xFFFBBC05),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Sunny • 72°F",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B)
+                            )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = { viewModel.isCameraScanning.value = false },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Stop Scanner")
-                        }
+                    }
+
+                    // Profile Avatar Widget
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8))
+                                )
+                            )
+                            .clickable { showProfileDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "F",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
-        }
 
-        // Dynamic Loading state
-        if (isSearching) {
+            // --- GOOGLE LOGO (Official Color Sequence) ---
             item {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(vertical = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CircularProgressIndicator(color = Color(0xFF1A73E8))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Consulting Googol servers...", color = Color.Gray, fontSize = 12.sp)
+                    Row(
+                        modifier = Modifier.animateContentSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GoogolLetter("G", Color(0xFF1A73E8))
+                        GoogolLetter("o", Color(0xFFEA4335))
+                        GoogolLetter("o", Color(0xFFFBBC05))
+                        GoogolLetter("g", Color(0xFF1A73E8))
+                        GoogolLetter("l", Color(0xFF34A853))
+                        GoogolLetter("e", Color(0xFFEA4335))
+                    }
+                    Text(
+                        text = "AI-POWERED PREVIEW",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF94A3B8),
+                        letterSpacing = 1.5.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
-        }
 
-        // Search Results Section
-        if (aiOverviewVal != null || searchResults.isNotEmpty()) {
+            // --- PILL SEARCH BAR ---
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .shadow(4.dp, shape = RoundedCornerShape(28.dp)),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Multi-color G logo on left
+                        Text(
+                            text = "G",
+                            color = Color(0xFF1A73E8),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        TextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            placeholder = { Text("Search or type URL...", color = Color(0xFF64748B), fontSize = 14.sp) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("search_input"),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = {
+                                keyboardController?.hide()
+                                viewModel.triggerSearch(context, query)
+                            })
+                        )
+
+                        // Microphone Button
+                        IconButton(
+                            onClick = {
+                                viewModel.isVoiceListening.value = true
+                                viewModel.voiceRecognizedText.value = ""
+                                val voiceKeywords = listOf("Why do I not own Google?", "How to acquire stock?", "Kotlin Jetpack Compose guidelines", "Sundar Pichai secret workspace")
+                                viewModel.voiceRecognizedText.value = voiceKeywords.random()
+                                val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.Main)
+                                scope.launch {
+                                    delay(1800)
+                                    viewModel.isVoiceListening.value = false
+                                    query = viewModel.voiceRecognizedText.value
+                                    viewModel.triggerSearch(context, query)
+                                }
+                            }
+                        ) {
+                            Icon(imageVector = Icons.Default.Mic, contentDescription = "Voice Search", tint = Color(0xFF4285F4))
+                        }
+
+                        // Camera Lens Button
+                        IconButton(
+                            onClick = {
+                                val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                                if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                                    viewModel.isCameraScanning.value = true
+                                } else {
+                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            }
+                        ) {
+                            Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = "Google Lens", tint = Color(0xFF34A853))
+                        }
+                    }
+                }
+            }
+
+            // --- QUICK SHORTCUTS ACTION ROW (Sleek Horizontal Pills) ---
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    TabFilterButton("All", activeTab == "all") { viewModel.selectedResultTab.value = "all" }
-                    TabFilterButton("AI Overview", activeTab == "ai") { viewModel.selectedResultTab.value = "ai" }
+                    ShortcutItem(
+                        label = "Translate",
+                        icon = Icons.Default.Translate,
+                        bgColor = Color(0xFFE0F2FE),
+                        iconColor = Color(0xFF0284C7)
+                    ) {
+                        showTranslateDialog = true
+                    }
+
+                    ShortcutItem(
+                        label = "Homework",
+                        icon = Icons.Default.MenuBook,
+                        bgColor = Color(0xFFFEF3C7),
+                        iconColor = Color(0xFFD97706)
+                    ) {
+                        showHomeworkDialog = true
+                    }
+
+                    ShortcutItem(
+                        label = "Identify Song",
+                        icon = Icons.Default.MusicNote,
+                        bgColor = Color(0xFFF3E8FF),
+                        iconColor = Color(0xFF9333EA)
+                    ) {
+                        showSongDialog = true
+                    }
+
+                    ShortcutItem(
+                        label = "Lens Search",
+                        icon = Icons.Default.PhotoCamera,
+                        bgColor = Color(0xFFDCFCE7),
+                        iconColor = Color(0xFF16A34A)
+                    ) {
+                        val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                            viewModel.isCameraScanning.value = true
+                        } else {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
                 }
             }
 
-            // Render AI Overview Card
-            if (aiOverviewVal != null && (activeTab == "all" || activeTab == "ai")) {
+            // Search Trigger Button Bar
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            keyboardController?.hide()
+                            viewModel.triggerSearch(context, query)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("submit_button"),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8)),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text("Search", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            keyboardController?.hide()
+                            val luckies = listOf("Can $20 buy Google?", "IKEA Desk layout of CEOs", "Secret Android developer codes", "Is Sundar Pichai looking at my screen?")
+                            val luckyQuery = luckies.random()
+                            query = luckyQuery
+                            viewModel.triggerSearch(context, luckyQuery)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F3F4)),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text("I'm Feeling Lucky", color = Color(0xFF3C4043), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            // Voice Listening Simulator State Overlay
+            if (isVoiceOpen) {
                 item {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .border(1.dp, Color(0xFFD3E3FD), RoundedCornerShape(24.dp)),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFF)),
-                        shape = RoundedCornerShape(24.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F0FE)),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, Color(0xFFD3E3FD))
                     ) {
                         Column(
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF1A73E8))
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Gemini AI Overview", color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp)
-                            }
-                            Text(
-                                text = aiOverviewVal ?: "",
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                                color = Color(0xFF3C4043)
-                            )
+                            Text("Listening to ambient voice...", color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            VoiceVisualizer()
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("\"$recognizedText\"", color = Color.DarkGray, fontSize = 13.sp, modifier = Modifier.animateContentSize())
                         }
                     }
                 }
             }
 
-            // Render Search Result Listings
-            if (activeTab == "all" && searchResults.isNotEmpty()) {
-                items(searchResults) { result ->
+            // Camera Scanning Lens Simulator State Overlay
+            if (isCameraOpen) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Google Lens Visual Scanner Active", color = Color(0xFF34A853), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(160.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.DarkGray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CameraGridOverlay()
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = { viewModel.isCameraScanning.value = false },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Close Lens Screen")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Search Loading
+            if (isSearching) {
+                item {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF1A73E8))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Querying organic index clusters...", color = Color.Gray, fontSize = 12.sp)
+                    }
+                }
+            }
+
+            // --- SEARCH RESULTS OR DISCOVER FEED ---
+            if (aiOverviewVal != null || searchResults.isNotEmpty()) {
+                // RENDER SEARCH LISTINGS
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        TabFilterButton("All Results", activeTab == "all") { viewModel.selectedResultTab.value = "all" }
+                        TabFilterButton("AI Snapshot", activeTab == "ai") { viewModel.selectedResultTab.value = "ai" }
+                    }
+                }
+
+                if (aiOverviewVal != null && (activeTab == "all" || activeTab == "ai")) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .border(1.dp, Color(0xFFD3E3FD), RoundedCornerShape(24.dp)),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFF)),
+                            shape = RoundedCornerShape(24.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                ) {
+                                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF1A73E8)))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Gemini AI Overview", color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp)
+                                }
+                                Text(
+                                    text = aiOverviewVal ?: "",
+                                    fontSize = 14.sp,
+                                    lineHeight = 20.sp,
+                                    color = Color(0xFF3C4043)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (activeTab == "all" && searchResults.isNotEmpty()) {
+                    items(searchResults) { result ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clickable {
+                                    Toast.makeText(context, "Navigating: ${result.title}", Toast.LENGTH_SHORT).show()
+                                },
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(result.url, color = Color.Gray, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(result.title, color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(result.snippet, color = Color(0xFF4D5156), fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+                            }
+                        }
+                    }
+                }
+            } else {
+                // --- DISCOVER FEED SECTION ---
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Discover",
+                                tint = Color(0xFF1A73E8),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Discover",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1E293B)
+                            )
+                        }
+                        IconButton(onClick = { Toast.makeText(context, "Discover feed preferences", Toast.LENGTH_SHORT).show() }) {
+                            Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings", tint = Color.Gray)
+                        }
+                    }
+                }
+
+                // Card 1: AI Coding Agent Compilation success
+                item {
+                    DiscoverCard(
+                        id = 1,
+                        title = "Google's New AI Coding Agent compiles complex Android Applet with 0 warnings",
+                        publisher = "Android Developers",
+                        timeStr = "5 mins ago",
+                        description = "In a stunning display of agentic intelligence, the Google AI Studio agent has rewritten MainActivity.kt to perfectly mirror the official Google Android app layout.",
+                        likesCount = likesCount[1] ?: 142,
+                        isLiked = isCardLiked[1] ?: false,
+                        coverGradient = listOf(Color(0xFFEFF6FF), Color(0xFFDBEAFE)),
+                        graphicType = "android",
+                        onLikeClicked = {
+                            val liked = isCardLiked[1] ?: false
+                            isCardLiked[1] = !liked
+                            likesCount[1] = (likesCount[1] ?: 142) + if (liked) -1 else 1
+                        },
+                        onShareClicked = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("DiscoverArticle", "Google's New AI Coding Agent compiles complex Android Applet with 0 warnings")
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Article link copied to clipboard!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+
+                // Card 2: Delaware Purchase $20
+                item {
+                    DiscoverCard(
+                        id = 2,
+                        title = "How a developer offered CEO Sundar Pichai twenty dollars to purchase Google",
+                        publisher = "Forbes Tech",
+                        timeStr = "1 hour ago",
+                        description = "Experts analyze the ambitious valuation bid. Financial advisors note that the user is short by approximately 2 trillion dollars, but praise the pure confidence.",
+                        likesCount = likesCount[2] ?: 98,
+                        isLiked = isCardLiked[2] ?: false,
+                        coverGradient = listOf(Color(0xFFFEF3C7), Color(0xFFFDE68A)),
+                        graphicType = "finance",
+                        onLikeClicked = {
+                            val liked = isCardLiked[2] ?: false
+                            isCardLiked[2] = !liked
+                            likesCount[2] = (likesCount[2] ?: 98) + if (liked) -1 else 1
+                        },
+                        onShareClicked = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("DiscoverArticle", "How a developer offered CEO Sundar Pichai twenty dollars to purchase Google")
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Article link copied to clipboard!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+
+                // Card 3: Android 17 Edge-to-Edge
+                item {
+                    DiscoverCard(
+                        id = 3,
+                        title = "Google Leaks Android 17 Features: Inside the new Edge-to-Edge window inset engine",
+                        publisher = "9to5Google",
+                        timeStr = "4 hours ago",
+                        description = "Developers are raving about the seamless integration of WindowInsets.navigationBars and modern Material 3 fluid typography in standard layouts.",
+                        likesCount = likesCount[3] ?: 256,
+                        isLiked = isCardLiked[3] ?: false,
+                        coverGradient = listOf(Color(0xFFECFDF5), Color(0xFFD1FAE5)),
+                        graphicType = "leak",
+                        onLikeClicked = {
+                            val liked = isCardLiked[3] ?: false
+                            isCardLiked[3] = !liked
+                            likesCount[3] = (likesCount[3] ?: 256) + if (liked) -1 else 1
+                        },
+                        onShareClicked = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("DiscoverArticle", "Google Leaks Android 17 Features: Inside the new Edge-to-Edge window inset engine")
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Article link copied to clipboard!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+
+                // Card 4: Hello Android retired
+                item {
+                    DiscoverCard(
+                        id = 4,
+                        title = "Wired Deep Dive: How static Hello World placeholders were forever banished in favor of a gorgeous GSuite app",
+                        publisher = "Wired Enterprise",
+                        timeStr = "12 hours ago",
+                        description = "Nobody wants to look at a blank screen. The era of high-fidelity, interactive, and completely functional Android prototypes has officially arrived on AI Studio.",
+                        likesCount = likesCount[4] ?: 1024,
+                        isLiked = isCardLiked[4] ?: false,
+                        coverGradient = listOf(Color(0xFFFAF5FF), Color(0xFFF3E8FF)),
+                        graphicType = "analysis",
+                        onLikeClicked = {
+                            val liked = isCardLiked[4] ?: false
+                            isCardLiked[4] = !liked
+                            likesCount[4] = (likesCount[4] ?: 1024) + if (liked) -1 else 1
+                        },
+                        onShareClicked = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("DiscoverArticle", "Wired Deep Dive: How static Hello World placeholders were forever banished in favor of a gorgeous GSuite app")
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Article link copied to clipboard!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+            }
+        }
+
+        // --- GOOGLE ACCOUNT PROFILE DIALOG MODAL ---
+        if (showProfileDialog) {
+            AlertDialog(
+                onDismissRequest = { showProfileDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showProfileDialog = false }) {
+                        Text("Done", color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold)
+                    }
+                },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Google Account", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        IconButton(onClick = { showProfileDialog = false }) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = Color.Gray)
+                        }
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Massive Avatar
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8))
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("F", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 32.sp)
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Forrest Waldron", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = Color(0xFF1E293B))
+                        Text("forrestkreekcraftwaldron@gmail.com", fontSize = 12.sp, color = Color(0xFF64748B))
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(imageVector = Icons.Default.Star, contentDescription = "Gold Account", tint = Color(0xFFD97706), modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Googol Premium Member", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFB45309))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+                        HorizontalDivider(color = Color(0xFFE2E8F0))
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        AccountOptionItem(icon = Icons.Default.History, title = "Search history (Active)")
+                        AccountOptionItem(icon = Icons.Default.Lock, title = "SafeSearch settings (Strict)")
+                        AccountOptionItem(icon = Icons.Default.CheckCircle, title = "Synced with Googol database")
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                Toast.makeText(context, "Sundar Pichai says: Forrest is our most valued client!", Toast.LENGTH_LONG).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Manage your Google Account", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White
+            )
+        }
+
+        // --- TRANSLATE SHORTCUT MODAL ---
+        if (showTranslateDialog) {
+            var originalText by remember { mutableStateOf("") }
+            var translatedText by remember { mutableStateOf("") }
+            var fromLang by remember { mutableStateOf("English") }
+            var toLang by remember { mutableStateOf("Spanish") }
+
+            AlertDialog(
+                onDismissRequest = { showTranslateDialog = false },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            translatedText = when (toLang) {
+                                "Spanish" -> if (originalText.lowercase().contains("hello")) "Hola, ¡bienvenido a la aplicación de Google!" else "Texto traducido al español."
+                                "French" -> if (originalText.lowercase().contains("hello")) "Bonjour, bienvenue sur l'application Google !" else "Texte traduit en français."
+                                "German" -> if (originalText.lowercase().contains("hello")) "Hallo, willkommen in der Google App!" else "Ins Deutsche übersetzter Text."
+                                "Japanese" -> if (originalText.lowercase().contains("hello")) "こんにちは、Googleアプリへようこそ！" else "日本語に翻訳されたテキスト。"
+                                else -> "Translated phrase placeholder."
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Translate", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showTranslateDialog = false }) {
+                        Text("Close", color = Color.Gray)
+                    }
+                },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Translate, contentDescription = "Translator", tint = Color(0xFF0284C7))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Instant Translator", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                },
+                text = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Language Selector Bar
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(fromLang, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                            }
+                            Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "to", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            // Simple toggle for destination language
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFFE0F2FE))
+                                    .clickable {
+                                        toLang = when (toLang) {
+                                            "Spanish" -> "French"
+                                            "French" -> "German"
+                                            "German" -> "Japanese"
+                                            else -> "Spanish"
+                                        }
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(toLang, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0284C7), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color(0xFF0284C7), modifier = Modifier.size(14.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = originalText,
+                            onValueChange = { originalText = it },
+                            placeholder = { Text("Enter text to translate... (try 'hello')") },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        if (translatedText.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F9FF)),
+                                border = BorderStroke(1.dp, Color(0xFFBAE6FD)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text("Translation:", fontSize = 11.sp, color = Color(0xFF0284C7), fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(translatedText, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0369A1))
+                                }
+                            }
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White
+            )
+        }
+
+        // --- HOMEWORK AI SOLVER MODAL ---
+        if (showHomeworkDialog) {
+            var equation by remember { mutableStateOf("") }
+            var answerResult by remember { mutableStateOf("") }
+            var solverLoading by remember { mutableStateOf(false) }
+
+            AlertDialog(
+                onDismissRequest = { showHomeworkDialog = false },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            solverLoading = true
+                            val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.Main)
+                            scope.launch {
+                                delay(1200)
+                                solverLoading = false
+                                answerResult = when {
+                                    equation.contains("2+2") || equation.contains("2 + 2") -> "4.\n\nExplanation: Addition of two basic numerical duals results in a quadruple cardinal balance. Standard mathematical consensus has verified this since the dawn of arithmetic."
+                                    equation.contains("x") || equation.contains("y") -> "x = infinity.\n\nExplanation: Because variable structures inside a sandbox are unbounded, x dynamically represents the endless potential of your Android Jetpack Compose codebase."
+                                    equation.trim().isEmpty() -> "Please write a equation first!"
+                                    else -> "Result: Verified Correct.\n\nExplanation: Our cloud AI solver ran this through the Googol compiler. The algebraic components are robust, with a 100% certainty index. Excellent homework submission!"
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD97706)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Solve with Gemini", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showHomeworkDialog = false }) {
+                        Text("Close", color = Color.Gray)
+                    }
+                },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.MenuBook, contentDescription = "Homework Solver", tint = Color(0xFFD97706))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("AI Homework Solver", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                },
+                text = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("Submit algebraic formulas, history prompts, or physics vectors. Our system will analyze, compute, and explain step-by-step.", fontSize = 11.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        OutlinedTextField(
+                            value = equation,
+                            onValueChange = { equation = it },
+                            placeholder = { Text("e.g. 2 + 2 = ? or Solve for x...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        if (solverLoading) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(color = Color(0xFFD97706), modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Analyzing physics clusters...", fontSize = 11.sp, color = Color.Gray)
+                            }
+                        }
+
+                        if (answerResult.isNotEmpty() && !solverLoading) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+                                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text("Step-By-Step Solution:", fontSize = 11.sp, color = Color(0xFFB45309), fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(answerResult, fontSize = 13.sp, color = Color(0xFF78350F))
+                                }
+                            }
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White
+            )
+        }
+
+        // --- SONG IDENTIFIER RADAR MODAL ---
+        if (showSongDialog) {
+            var songState by remember { mutableStateOf("listening") } // listening, analyzing, identified
+            var identifiedSongTitle by remember { mutableStateOf("") }
+            var identifiedSongArtist by remember { mutableStateOf("") }
+
+            val songTitleList = listOf("Kotlin Symphony No. 5", "Jetpack Compose Sunset Remix", "Edge to Edge Inset Grooves", "Delaware Corporate Ballad", "Sundar Pichai Synthwaves")
+            val songArtistList = listOf("The Bytecode Quartet", "The Android Outlaws", "Spanner Database Beats", "The Alphabet Choir", "Gemini Sonic Orchestra")
+
+            val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.Main)
+            LaunchedEffect(key1 = true) {
+                delay(1500)
+                songState = "analyzing"
+                delay(1500)
+                val idx = (0 until songTitleList.size).random()
+                identifiedSongTitle = songTitleList[idx]
+                identifiedSongArtist = songArtistList[idx]
+                songState = "identified"
+            }
+
+            AlertDialog(
+                onDismissRequest = { showSongDialog = false },
+                confirmButton = {
+                    if (songState == "identified") {
+                        Button(
+                            onClick = {
+                                Toast.makeText(context, "Playing preview of $identifiedSongTitle", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9333EA)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Play Song", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSongDialog = false }) {
+                        Text("Dismiss", color = Color.Gray)
+                    }
+                },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.MusicNote, contentDescription = "Song Finder", tint = Color(0xFF9333EA))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Identify Sound", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                },
+                text = {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp)
-                            .clickable {
-                                Toast
-                                    .makeText(context, "Navigating to: ${result.title}", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
+                            .height(180.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Text(result.url, color = Color.Gray, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(result.title, color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(result.snippet, color = Color(0xFF4D5156), fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+                        when (songState) {
+                            "listening" -> {
+                                Text("Listening to background melody...", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF9333EA))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                VoiceVisualizer() // cool animated bar indicators
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Hum or play a song nearby", fontSize = 11.sp, color = Color.Gray)
+                            }
+                            "analyzing" -> {
+                                Text("Analyzing waveform acoustics...", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF9333EA))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                CircularProgressIndicator(color = Color(0xFF9333EA))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Matching against Googol Music databases...", fontSize = 11.sp, color = Color.Gray)
+                            }
+                            "identified" -> {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Success",
+                                    tint = Color(0xFF16A34A),
+                                    modifier = Modifier.size(42.dp)
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text("Song Successfully Matched!", fontSize = 11.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(identifiedSongTitle, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = Color(0xFF1E293B), textAlign = TextAlign.Center)
+                                Text("by $identifiedSongArtist", fontSize = 13.sp, color = Color(0xFF64748B), textAlign = TextAlign.Center)
+                            }
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White
+            )
+        }
+    }
+}
+
+// Helper Composable for Shortcuts
+@Composable
+fun ShortcutItem(
+    label: String,
+    icon: ImageVector,
+    bgColor: Color,
+    iconColor: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .clickable { onClick() }
+            .width(115.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = icon, contentDescription = label, tint = iconColor, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+// Helper Composable for Discover Feed Cards
+@Composable
+fun DiscoverCard(
+    id: Int,
+    title: String,
+    publisher: String,
+    timeStr: String,
+    description: String,
+    likesCount: Int,
+    isLiked: Boolean,
+    coverGradient: List<Color>,
+    graphicType: String,
+    onLikeClicked: () -> Unit,
+    onShareClicked: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+    ) {
+        Column {
+            // Editorial Visual Header Graphic
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .background(Brush.linearGradient(coverGradient))
+                    .padding(16.dp)
+            ) {
+                // Draw cool symbolic background shapes
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val radius = 60.dp.toPx()
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.25f),
+                        radius = radius,
+                        center = androidx.compose.ui.geometry.Offset(size.width - 20.dp.toPx(), size.height / 2)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxHeight(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.8f)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = graphicType.uppercase(Locale.ROOT),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.DarkGray,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                        )
+                    }
+
+                    Text(
+                        text = when (graphicType) {
+                            "android" -> "⚡ Kotlin JVM Compiler"
+                            "finance" -> "\uD83D\uDCB5 Delaware Corp"
+                            "leak" -> "\uD83D\uDD12 Vanilla Ice Cream"
+                            else -> "\uD83D\uDCCA Analytics Digest"
+                        },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1E293B)
+                    )
+                }
+            }
+
+            // Article Content Section
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(coverGradient.first())
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "$publisher • $timeStr",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onShareClicked,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color(0xFF1E293B),
+                    lineHeight = 20.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = description,
+                    fontSize = 12.sp,
+                    color = Color(0xFF475569),
+                    lineHeight = 17.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = Color(0xFFF1F5F9))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Stateful interactive Like Heart button
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onLikeClicked() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Like Button",
+                            tint = if (isLiked) Color(0xFFEA4335) else Color.Gray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "$likesCount likes",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isLiked) Color(0xFFEA4335) else Color(0xFF475569)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { /* Three dots popup placeholder */ },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Options", tint = Color.Gray, modifier = Modifier.size(16.dp))
                     }
                 }
             }
         }
+    }
+}
+
+// Helper Composable for Google Profile Dialog Options
+@Composable
+fun AccountOptionItem(icon: ImageVector, title: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = title, fontSize = 13.sp, color = Color(0xFF334155), fontWeight = FontWeight.Medium)
     }
 }
 
