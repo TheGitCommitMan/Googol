@@ -100,12 +100,80 @@ class GoogolViewModel : ViewModel() {
     private val _activeGSuiteApp = MutableStateFlow(GSuiteApp.NONE)
     val activeGSuiteApp: StateFlow<GSuiteApp> = _activeGSuiteApp.asStateFlow()
 
-    // Real System Settings Values (satisfying "replace it with real settings" and "make it less bright")
+    // Real System Settings Values (satisfying "replace it with real settings" and "make it less fucking bright")
     var isDarkMode = mutableStateOf(true) // Defaults to true to make it eye-safe on start!
     var safeSearchMode = mutableStateOf("Strict") // Options: Strict, Moderate, Off
     var searchRegion = mutableStateOf("Delaware Sandbox") // Options: United States, Delaware Sandbox, International
     var showDiscoverFeed = mutableStateOf(true)
     var resultsPerPage = mutableStateOf(10f) // Slider from 5 to 50
+
+    // Real Search History and Bookmarks (for "add useful stuff" and "too gimmicky no real use")
+    val savedBookmarks = mutableStateListOf<SearchResult>()
+    val searchHistory = mutableStateListOf<String>()
+
+    init {
+        searchHistory.add("Kotlin Jetpack Compose guidelines")
+        searchHistory.add("How to buy Googol and replace Sundar")
+        searchHistory.add("Delaware incorporation certificate")
+    }
+
+    val localIndex = mapOf(
+        "kotlin" to listOf(
+            SearchResult("Kotlin Programming Language", "https://kotlinlang.org", "Kotlin is a modern, cross-platform, statically typed programming language with type inference, designed to interoperate fully with Java. It is Google's preferred language for Android development."),
+            SearchResult("Kotlin Coroutines: Asynchronous Programming", "https://kotlinlang.org/docs/coroutines-overview.html", "Learn how to write asynchronous, non-blocking code using Kotlin coroutines. Highly optimized for managing threads on Android."),
+            SearchResult("Why Kotlin is better than Java", "https://blog.jetbrains.com/kotlin", "JetBrains built Kotlin to solve common developer pain points, including null safety, boilerplate code, and verbose syntax.")
+        ),
+        "compose" to listOf(
+            SearchResult("Jetpack Compose - Android's modern UI toolkit", "https://developer.android.com/compose", "Jetpack Compose is Android’s modern toolkit for building native UI. It simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs."),
+            SearchResult("Compose Layouts: Rows, Columns, and Boxes", "https://developer.android.com/develop/ui/compose/layouts", "Understand core layouts in Jetpack Compose to arrange your Material Design 3 interface components vertically, horizontally, or stacked."),
+            SearchResult("State Management in Jetpack Compose", "https://developer.android.com/develop/ui/compose/state", "Learn about mutableStateOf, remember, rememberSaveable, and Flow collection in Compose to ensure smooth recomposition.")
+        ),
+        "android" to listOf(
+            SearchResult("Android Developer Portal", "https://developer.android.com", "Get the official documentation, tutorials, SDK reference, and tools to build beautiful native applications on Google's Android mobile operating system."),
+            SearchResult("Google Play Console - App Publishing", "https://play.google.com/console", "Deploy, track, and optimize your Android packages (APKs/AABs) on the Google Play Store for billions of active devices worldwide."),
+            SearchResult("Android 16 API Preview & SDK", "https://developer.android.com/about/versions/16", "Discover new features and changes in the Android 16 SDK. Preview notification bubbles, modern edge-to-edge layouts, and enhanced window classes.")
+        ),
+        "delaware" to listOf(
+            SearchResult("Delaware Corporation Registry", "https://corp.delaware.gov", "The official gateway for Delaware business formations, LLC certificates, corporate charters, and incorporation filings. Over 60% of Fortune 500 entities are incorporated here."),
+            SearchResult("Googol Delaware Franchise Tax Records", "https://ownership.googol.com/delaware-audit", "Secure search database detailing voting stock registries for Googol G-Suite systems. 0.00% ownership has been matched with your user account ID."),
+            SearchResult("Corporate Law and Stock Certificates in DE", "https://delawarelaw.edu", "Understand why startups choose Delaware: robust legal precedents, a dedicated Court of Chancery, and protective stock structures.")
+        ),
+        "sundar" to listOf(
+            SearchResult("Sundar Pichai - CEO of Alphabet and Google", "https://abc.xyz/our-leadership/sundar-pichai", "Sundar Pichai joined Google in 2004, leading product management for Google Chrome, Drive, Maps, and Android before succeeding Larry Page as CEO of Alphabet Inc."),
+            SearchResult("Sundar Pichai secret workspace email logs", "https://workspace.googol.com/sundar-logs", "Simulated system logs show Sundar replying: 'Please decline twenty dollar cash offers for ownership of corporate search index infrastructure.' Try the 'Audit' tab for a mock appeal."),
+            SearchResult("Sundar's Keynote on Generative AI and Gemini", "https://blog.google/technology/ai/gemini-keynote", "Watch Sundar Pichai introduce Gemini 2.5 Flash and multi-modal developer features inside the AI Studio sandbox environment.")
+        ),
+        "googol" to listOf(
+            SearchResult("Googol Search Engine Platform", "https://googol.com", "The world's most familiar AI search engine simulator. Search anything, find everything, own nothing. Highly responsive dark mode aesthetic."),
+            SearchResult("How Googol Search Works", "https://googol.com/how-search-works", "Discover our crawling, indexing, and ranking algorithms designed to simulate high-fidelity Google Search results natively on Android."),
+            SearchResult("Googol Workspace Suite", "https://googol.com/workspace", "Simulated collaboration suite containing functional local versions of Gmail, Drive, Docs, Sheets, Calendar, and Meet interfaces.")
+        ),
+        "api" to listOf(
+            SearchResult("Google AI Studio Platform", "https://aistudio.google.com", "Write, test, and prototype prompts with Gemini. Manage your API credentials securely inside the AI Studio secrets panel."),
+            SearchResult("Gemini API Developer Documentation", "https://ai.google.dev/gemini-api/docs", "Integrate the Gemini API in your native Android applications using the Google AI Client SDK. Support for multimodal inputs, text generation, and JSON schemas.")
+        )
+    )
+
+    fun generateDynamicResults(query: String): List<SearchResult> {
+        val capitalized = query.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+        return listOf(
+            SearchResult(
+                "$capitalized - Detailed search index analysis",
+                "https://googol.com/search?q=${query.lowercase().trim().replace(" ", "+")}",
+                "Explore comprehensive organic articles, research journals, and local Delaware database registries regarding '$query'."
+            ),
+            SearchResult(
+                "What is $capitalized? Definition & Guide",
+                "https://wikipedia.org/wiki/${capitalized.replace(" ", "_")}",
+                "Read community-contributed guides and technical overviews discussing '$query' and its history, architecture, and common applications."
+            ),
+            SearchResult(
+                "Googol Workspace files mentioning '$query'",
+                "https://drive.googol.com/search?q=${query.lowercase().trim().replace(" ", "+")}",
+                "Simulated indexing checks found 12 files in your secure GSuite container mentioning '$query'. Open the 'GSuite' tab to audit Drive files."
+            )
+        )
+    }
 
     // System Setting Values
     var brightness = mutableStateOf(90f)
@@ -204,11 +272,21 @@ class GoogolViewModel : ViewModel() {
 
     // Interactive Trigger Search
     fun triggerSearch(context: Context, query: String) {
-        if (query.trim().isEmpty()) return
-        searchQuery.value = query
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return
+        searchQuery.value = trimmed
         isSearching.value = true
         aiOverview.value = null
         searchResultsList.clear()
+
+        // Maintain Search History (distinct, most recent first, max 10 entries)
+        if (searchHistory.contains(trimmed)) {
+            searchHistory.remove(trimmed)
+        }
+        searchHistory.add(0, trimmed)
+        if (searchHistory.size > 10) {
+            searchHistory.removeLast()
+        }
 
         // We run a background search routine
         val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.IO)
@@ -220,12 +298,12 @@ class GoogolViewModel : ViewModel() {
                     val mediaType = "application/json".toMediaType()
                     val requestJson = """
                         {
-                          "contents": [{"parts": [{"text": "${query.replace("\"", "\\\"")}"}]}],
+                          "contents": [{"parts": [{"text": "${trimmed.replace("\"", "\\\"")}"}]}],
                           "systemInstruction": {
                             "parts": [{"text": "You are Googol AI, a helpful, brilliant, and slightly superior search assistant. Keep answers concise, extremely polished and styled in clean markdown. If the user asks about owning Googol or Google, remind them that they have exactly zero shares and suggest taking the Diagnostic test."}]
                           }
                         }
-                    """.trimIndent()
+                      """.trimIndent()
 
                     val request = Request.Builder()
                         .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
@@ -252,23 +330,48 @@ class GoogolViewModel : ViewModel() {
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        aiOverview.value = "Unable to reach dynamic AI nodes. Offline fallback overview activated. Here is standard search summary on '$query'."
+                        aiOverview.value = "Unable to reach dynamic AI nodes. Offline fallback overview activated. Here is standard search summary on '$trimmed'."
                     }
                 }
             } else {
                 // Mock Streaming Overview Fallback
                 delay(1200)
                 withContext(Dispatchers.Main) {
-                    aiOverview.value = "Googol Search local index analysis: Search results for '$query' successfully assembled. Since the Gemini API key is in template mode, local fallback indices indicate your conversion to a fully native Android Kotlin environment is complete and operational!"
+                    val firstTopic = trimmed.lowercase()
+                    val summaryDesc = if (localIndex.keys.any { firstTopic.contains(it) }) {
+                        "Googol Search found highly relevant local indices matching '$trimmed'. Native Android Kotlin data structures were queried and assembled instantly."
+                    } else {
+                        "Googol local index analysis: Search overview for '$trimmed' successfully assembled. Fallback directories show full compatibility with all Android Material 3 specs."
+                    }
+                    aiOverview.value = summaryDesc
                 }
             }
 
             // Assemble organic search listings
             delay(500)
             withContext(Dispatchers.Main) {
-                searchResultsList.add(SearchResult("$query - Googol General Index", "https://googol.com/q?${query.lowercase()}", "Access real-time database crawling indices regarding '$query'. Find comprehensive Delaware documents and index profiles."))
-                searchResultsList.add(SearchResult("How to buy Googol and replace Sundar Pichai", "https://ownership.googol.com/ceo-thoughts", "Read articles about Google's corporate Delaware board, market valuations, and voting share diagnostics."))
-                searchResultsList.add(SearchResult("Native Kotlin & Compose applet trace", "https://com.example.googol", "View the main activity source files, build dependencies, and asset configurations inside your local system image."))
+                val cleanQuery = trimmed.lowercase()
+                val matchedResults = mutableListOf<SearchResult>()
+
+                // Check local keywords
+                var foundMatch = false
+                localIndex.forEach { (keyword, results) ->
+                    if (cleanQuery.contains(keyword)) {
+                        matchedResults.addAll(results)
+                        foundMatch = true
+                    }
+                }
+
+                // If no direct keyword found, create realistic dynamic results
+                if (!foundMatch || matchedResults.isEmpty()) {
+                    matchedResults.addAll(generateDynamicResults(trimmed))
+                }
+
+                // Apply limit based on the settings results slider!
+                val countLimit = resultsPerPage.value.toInt().coerceIn(3, 50)
+                val limitedResults = matchedResults.take(countLimit)
+
+                searchResultsList.addAll(limitedResults)
                 isSearching.value = false
             }
         }
@@ -490,8 +593,8 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         GoogolLetter("o", Color(0xFFEA4335))
                         GoogolLetter("o", Color(0xFFFBBC05))
                         GoogolLetter("g", Color(0xFF1A73E8))
-                        GoogolLetter("l", Color(0xFF34A853))
-                        GoogolLetter("e", Color(0xFFEA4335))
+                        GoogolLetter("o", Color(0xFF34A853))
+                        GoogolLetter("l", Color(0xFFEA4335))
                     }
                     Text(
                         text = "AI-POWERED PREVIEW",
@@ -550,6 +653,24 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("search_input"),
+                            trailingIcon = {
+                                if (query.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            query = ""
+                                            viewModel.aiOverview.value = null
+                                            viewModel.searchResultsList.clear()
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = "Clear search",
+                                            tint = textSecondary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            },
                             colors = TextFieldDefaults.colors(
                                 focusedTextColor = textColor,
                                 unfocusedTextColor = textColor,
@@ -616,7 +737,8 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         label = "Translate",
                         icon = Icons.Default.Translate,
                         bgColor = Color(0xFFE0F2FE),
-                        iconColor = Color(0xFF0284C7)
+                        iconColor = Color(0xFF0284C7),
+                        isDark = isDark
                     ) {
                         showTranslateDialog = true
                     }
@@ -625,7 +747,8 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         label = "Homework",
                         icon = Icons.Default.MenuBook,
                         bgColor = Color(0xFFFEF3C7),
-                        iconColor = Color(0xFFD97706)
+                        iconColor = Color(0xFFD97706),
+                        isDark = isDark
                     ) {
                         showHomeworkDialog = true
                     }
@@ -634,7 +757,8 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         label = "Identify Song",
                         icon = Icons.Default.MusicNote,
                         bgColor = Color(0xFFF3E8FF),
-                        iconColor = Color(0xFF9333EA)
+                        iconColor = Color(0xFF9333EA),
+                        isDark = isDark
                     ) {
                         showSongDialog = true
                     }
@@ -643,7 +767,8 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         label = "Lens Search",
                         icon = Icons.Default.PhotoCamera,
                         bgColor = Color(0xFFDCFCE7),
-                        iconColor = Color(0xFF16A34A)
+                        iconColor = Color(0xFF16A34A),
+                        isDark = isDark
                     ) {
                         val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
                         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
@@ -784,21 +909,24 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        TabFilterButton("All Results", activeTab == "all") { viewModel.selectedResultTab.value = "all" }
-                        TabFilterButton("AI Snapshot", activeTab == "ai") { viewModel.selectedResultTab.value = "ai" }
+                        TabFilterButton("All Results", activeTab == "all", isDark) { viewModel.selectedResultTab.value = "all" }
+                        TabFilterButton("AI Snapshot", activeTab == "ai", isDark) { viewModel.selectedResultTab.value = "ai" }
+                        TabFilterButton("Saved Links (${viewModel.savedBookmarks.size})", activeTab == "bookmarks", isDark) { viewModel.selectedResultTab.value = "bookmarks" }
                     }
                 }
 
                 if (aiOverviewVal != null && (activeTab == "all" || activeTab == "ai")) {
                     item {
+                        val aiCardBg = if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFF)
+                        val aiCardBorder = if (isDark) Color(0xFF38BDF8) else Color(0xFFD3E3FD)
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .border(1.dp, Color(0xFFD3E3FD), RoundedCornerShape(24.dp)),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFF)),
+                                .border(1.dp, aiCardBorder, RoundedCornerShape(24.dp)),
+                            colors = CardDefaults.cardColors(containerColor = aiCardBg),
                             shape = RoundedCornerShape(24.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -814,7 +942,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                                     text = aiOverviewVal ?: "",
                                     fontSize = 14.sp,
                                     lineHeight = 20.sp,
-                                    color = Color(0xFF3C4043)
+                                    color = textColor
                                 )
                             }
                         }
@@ -830,21 +958,297 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                                 .clickable {
                                     Toast.makeText(context, "Navigating: ${result.title}", Toast.LENGTH_SHORT).show()
                                 },
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
                             shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                            border = BorderStroke(1.dp, cardBorder)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
-                                Text(result.url, color = Color.Gray, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(result.title, color = Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(result.snippet, color = Color(0xFF4D5156), fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = result.url,
+                                        color = textSecondary,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    val isBookmarked = viewModel.savedBookmarks.any { it.title == result.title }
+                                    IconButton(
+                                        onClick = {
+                                            if (isBookmarked) {
+                                                viewModel.savedBookmarks.removeAll { it.title == result.title }
+                                                Toast.makeText(context, "Removed from Bookmarks", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                viewModel.savedBookmarks.add(result)
+                                                Toast.makeText(context, "Saved to Bookmarks", Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                            contentDescription = "Save result",
+                                            tint = if (isBookmarked) Color(0xFF1A73E8) else textSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(result.title, color = if (isDark) Color(0xFF60A5FA) else Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(result.snippet, color = textColor, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+                            }
+                        }
+                    }
+                } else if (activeTab == "bookmarks") {
+                    if (viewModel.savedBookmarks.isEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(imageVector = Icons.Default.BookmarkBorder, contentDescription = "No bookmarks", tint = textSecondary, modifier = Modifier.size(48.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("No Saved Links Yet", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
+                                Text("Tap the bookmark icon on any search result to save it for quick access.", color = textSecondary, fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
+                            }
+                        }
+                    } else {
+                        items(viewModel.savedBookmarks) { bookmark ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .clickable {
+                                        Toast.makeText(context, "Navigating: ${bookmark.title}", Toast.LENGTH_SHORT).show()
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, cardBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = bookmark.url,
+                                            color = textSecondary,
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.savedBookmarks.remove(bookmark)
+                                                Toast.makeText(context, "Removed from Bookmarks", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Bookmark,
+                                                contentDescription = "Remove Bookmark",
+                                                tint = Color(0xFF1A73E8),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(bookmark.title, color = if (isDark) Color(0xFF60A5FA) else Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(bookmark.snippet, color = textColor, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+                                }
                             }
                         }
                     }
                 }
-            } else if (viewModel.showDiscoverFeed.value) {
-                // --- DISCOVER FEED SECTION ---
-                item {
+            } else {
+                // --- HOME EMPTY STATE: RECENT SEARCHES & BOOKMARKS QUICK ACCESS ---
+                if (viewModel.searchHistory.isNotEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.History,
+                                        contentDescription = "Recent Searches",
+                                        tint = textSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Recent Searches",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = textColor
+                                    )
+                                }
+                                Text(
+                                    text = "Clear All",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF1A73E8),
+                                    modifier = Modifier
+                                        .clickable {
+                                            viewModel.searchHistory.clear()
+                                            Toast.makeText(context, "Search history cleared", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .padding(4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            // Scrollable row of past search terms
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                viewModel.searchHistory.forEach { historyQuery ->
+                                    Card(
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                                        border = BorderStroke(1.dp, cardBorder),
+                                        modifier = Modifier.clickable {
+                                            query = historyQuery
+                                            viewModel.triggerSearch(context, historyQuery)
+                                        }
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = historyQuery,
+                                                fontSize = 12.sp,
+                                                color = textColor,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            IconButton(
+                                                onClick = {
+                                                    viewModel.searchHistory.remove(historyQuery)
+                                                },
+                                                modifier = Modifier.size(16.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "Remove search item",
+                                                    tint = textSecondary,
+                                                    modifier = Modifier.size(10.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (viewModel.savedBookmarks.isNotEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Bookmark,
+                                        contentDescription = "Bookmarks",
+                                        tint = Color(0xFF1A73E8),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Saved Links Quick Access",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = textColor
+                                    )
+                                }
+                                Text(
+                                    text = "Clear Bookmarks",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp,
+                                    color = Color(0xFFEA4335),
+                                    modifier = Modifier
+                                        .clickable {
+                                            viewModel.savedBookmarks.clear()
+                                            Toast.makeText(context, "Bookmarks cleared", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .padding(4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            viewModel.savedBookmarks.forEach { bookmark ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .clickable {
+                                            Toast.makeText(context, "Navigating: ${bookmark.title}", Toast.LENGTH_SHORT).show()
+                                        },
+                                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.dp, cardBorder)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(bookmark.url, color = textSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Text(bookmark.title, color = if (isDark) Color(0xFF60A5FA) else Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.savedBookmarks.remove(bookmark)
+                                                Toast.makeText(context, "Removed from Bookmarks", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Bookmark,
+                                                contentDescription = "Remove Bookmark",
+                                                tint = Color(0xFF1A73E8),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (viewModel.showDiscoverFeed.value) {
+                    // --- DISCOVER FEED SECTION ---
+                    item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -982,6 +1386,7 @@ fun HomeScreen(viewModel: GoogolViewModel, context: Context) {
                 }
             }
         }
+    }
 
         // --- GOOGLE ACCOUNT PROFILE DIALOG MODAL ---
         if (showProfileDialog) {
@@ -1373,15 +1778,21 @@ fun ShortcutItem(
     icon: ImageVector,
     bgColor: Color,
     iconColor: Color,
+    isDark: Boolean = false,
     onClick: () -> Unit
 ) {
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val circleBg = if (isDark) bgColor.copy(alpha = 0.15f) else bgColor
+
     Card(
         modifier = Modifier
             .clickable { onClick() }
             .width(115.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = BorderStroke(1.dp, cardBorder)
     ) {
         Column(
             modifier = Modifier
@@ -1394,7 +1805,7 @@ fun ShortcutItem(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(bgColor),
+                    .background(circleBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(imageVector = icon, contentDescription = label, tint = iconColor, modifier = Modifier.size(20.dp))
@@ -1404,7 +1815,7 @@ fun ShortcutItem(
                 text = label,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B),
+                color = textColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1625,6 +2036,12 @@ fun WorkspaceScreen(viewModel: GoogolViewModel, activeApp: GSuiteApp) {
 
 @Composable
 fun WorkspaceHubGrid(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1634,7 +2051,7 @@ fun WorkspaceHubGrid(viewModel: GoogolViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A73E8)),
+            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF1E3A8A) else Color(0xFF1A73E8)),
             shape = RoundedCornerShape(24.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -1670,9 +2087,9 @@ fun WorkspaceHubGrid(viewModel: GoogolViewModel) {
                         .fillMaxWidth()
                         .height(130.dp)
                         .clickable { viewModel.setGSuiteApp(app.appType) },
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE0E0E0))
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(
                         modifier = Modifier
@@ -1685,14 +2102,14 @@ fun WorkspaceHubGrid(viewModel: GoogolViewModel) {
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(app.color.copy(alpha = 0.1f)),
+                                .background(app.color.copy(alpha = if (isDark) 0.2f else 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(imageVector = app.icon, contentDescription = app.name, tint = app.color, modifier = Modifier.size(24.dp))
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(app.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
-                        Text(app.desc, fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center)
+                        Text(app.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textColor)
+                        Text(app.desc, fontSize = 10.sp, color = textSecondary, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -1705,6 +2122,12 @@ data class WorkspaceAppItem(val name: String, val icon: ImageVector, val color: 
 // --- GMAIL SIMULATOR ---
 @Composable
 fun GmailSimulator(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
     val emails = viewModel.emails
     var newFrom by remember { viewModel.newMailFrom }
     var newSubject by remember { viewModel.newMailSubject }
@@ -1722,36 +2145,51 @@ fun GmailSimulator(viewModel: GoogolViewModel) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFEECEB)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDark) Color(0xFF3F1A1A) else Color(0xFFFEECEB)
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(imageVector = Icons.Default.Mail, contentDescription = "Mail", tint = Color(0xFFEA4335))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Active Inbox: ${emails.count { !it.isRead }} unread messages", color = Color(0xFFC5221F), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(
+                            "Active Inbox: ${emails.count { !it.isRead }} unread messages",
+                            color = if (isDark) Color(0xFFF87171) else Color(0xFFC5221F),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
 
             items(emails) { email ->
+                val readBg = cardBg
+                val unreadBg = if (isDark) Color(0xFF2E1A1A) else Color(0xFFFFECEB)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { email.isRead = !email.isRead },
-                    colors = CardDefaults.cardColors(containerColor = if (email.isRead) Color.White else Color(0xFFFFECEB)),
+                    colors = CardDefaults.cardColors(containerColor = if (email.isRead) readBg else unreadBg),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE8EAED))
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(email.from, fontWeight = if (email.isRead) FontWeight.Normal else FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
-                            Text(email.date, fontSize = 11.sp, color = Color.Gray)
+                            Text(email.from, fontWeight = if (email.isRead) FontWeight.Normal else FontWeight.Bold, fontSize = 13.sp, color = textColor)
+                            Text(email.date, fontSize = 11.sp, color = textSecondary)
                         }
-                        Text(email.subject, fontWeight = if (email.isRead) FontWeight.Normal else FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF1A73E8), modifier = Modifier.padding(top = 2.dp))
-                        Text(email.body, fontSize = 11.sp, color = Color(0xFF5F6368), lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
+                        Text(
+                            text = email.subject,
+                            fontWeight = if (email.isRead) FontWeight.Normal else FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1A73E8),
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                        Text(email.body, fontSize = 11.sp, color = textSecondary, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }
@@ -1761,36 +2199,54 @@ fun GmailSimulator(viewModel: GoogolViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp, bottom = 24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFDADCE0))
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Write mock email", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
+                        Text("Write mock email", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textColor)
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = newFrom,
                             onValueChange = { newFrom = it },
-                            placeholder = { Text("Sender Name") },
+                            placeholder = { Text("Sender Name", color = textSecondary) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = if (isDark) Color(0xFF38BDF8) else Color(0xFFEA4335),
+                                unfocusedBorderColor = cardBorder
+                            )
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
                             value = newSubject,
                             onValueChange = { newSubject = it },
-                            placeholder = { Text("Subject") },
+                            placeholder = { Text("Subject", color = textSecondary) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = if (isDark) Color(0xFF38BDF8) else Color(0xFFEA4335),
+                                unfocusedBorderColor = cardBorder
+                            )
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
                             value = newBody,
                             onValueChange = { newBody = it },
-                            placeholder = { Text("Email body details") },
+                            placeholder = { Text("Email body details", color = textSecondary) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(80.dp)
+                                .height(80.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = if (isDark) Color(0xFF38BDF8) else Color(0xFFEA4335),
+                                unfocusedBorderColor = cardBorder
+                            )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
@@ -1806,7 +2262,7 @@ fun GmailSimulator(viewModel: GoogolViewModel) {
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Send Simulated Email")
+                            Text("Send Simulated Email", color = Color.White)
                         }
                     }
                 }
@@ -1818,6 +2274,12 @@ fun GmailSimulator(viewModel: GoogolViewModel) {
 // --- DRIVE SIMULATOR ---
 @Composable
 fun DriveSimulator(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFDADCE0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
     val files = viewModel.driveFiles
     val context = LocalContext.current
 
@@ -1838,7 +2300,7 @@ fun DriveSimulator(viewModel: GoogolViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("File System Index", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("File System Index", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                     Button(
                         onClick = {
                             files.add(DriveFileItem(files.size + 1, "New_Unowned_Doc_${files.size}.txt", "Text Document", "2 KB"))
@@ -1855,9 +2317,9 @@ fun DriveSimulator(viewModel: GoogolViewModel) {
             items(files) { file ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFDADCE0))
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Row(
                         modifier = Modifier
@@ -1875,11 +2337,11 @@ fun DriveSimulator(viewModel: GoogolViewModel) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(file.name, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF202124))
-                                Text(file.type, fontSize = 10.sp, color = Color.Gray)
+                                Text(file.name, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = textColor)
+                                Text(file.type, fontSize = 10.sp, color = textSecondary)
                             }
                         }
-                        Text(file.size, fontSize = 11.sp, color = Color.Gray, fontFamily = FontFamily.Monospace)
+                        Text(file.size, fontSize = 11.sp, color = textSecondary, fontFamily = FontFamily.Monospace)
                     }
                 }
             }
@@ -1890,6 +2352,10 @@ fun DriveSimulator(viewModel: GoogolViewModel) {
 // --- DOCS SIMULATOR ---
 @Composable
 fun DocsSimulator(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFDADCE0)
     var text by remember { viewModel.docsContent }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -1900,17 +2366,19 @@ fun DocsSimulator(viewModel: GoogolViewModel) {
                 .weight(1f)
                 .padding(16.dp)
         ) {
-            Text("Live Editor Canvas", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+            Text("Live Editor Canvas", color = textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
+                textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp, color = textColor),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF4285F4),
-                    unfocusedBorderColor = Color(0xFFDADCE0)
+                    focusedTextColor = textColor,
+                    unfocusedTextColor = textColor,
+                    focusedBorderColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF4285F4),
+                    unfocusedBorderColor = cardBorder
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -1921,7 +2389,7 @@ fun DocsSimulator(viewModel: GoogolViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Words: ${text.split("\\s+".toRegex()).filter { it.isNotEmpty() }.size}", fontSize = 11.sp, color = Color.Gray)
+                Text("Words: ${text.split("\\s+".toRegex()).filter { it.isNotEmpty() }.size}", fontSize = 11.sp, color = textSecondary)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF34A853)))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1935,6 +2403,13 @@ fun DocsSimulator(viewModel: GoogolViewModel) {
 // --- SHEETS SIMULATOR ---
 @Composable
 fun SheetsSimulator(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFDADCE0)
+    val gridBorder = if (isDark) Color(0xFF334155) else Color(0xFFE8EAED)
+    val headerBg = if (isDark) Color(0xFF0F172A) else Color(0xFFF1F3F4)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
     val cells = viewModel.sheetsCells
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -1945,13 +2420,13 @@ fun SheetsSimulator(viewModel: GoogolViewModel) {
                 .weight(1f)
                 .padding(16.dp)
         ) {
-            Text("Coordinate Grid mathematical logbook", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+            Text("Coordinate Grid mathematical logbook", color = textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFDADCE0))
+                border = BorderStroke(1.dp, cardBorder)
             ) {
                 Column {
                     cells.forEachIndexed { rIdx, row ->
@@ -1959,7 +2434,7 @@ fun SheetsSimulator(viewModel: GoogolViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
-                                .border(0.5.dp, Color(0xFFE8EAED)),
+                                .border(0.5.dp, gridBorder),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Row Header
@@ -1967,10 +2442,10 @@ fun SheetsSimulator(viewModel: GoogolViewModel) {
                                 modifier = Modifier
                                     .width(40.dp)
                                     .fillMaxHeight()
-                                    .background(Color(0xFFF1F3F4)),
+                                    .background(headerBg),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(row[0], fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                                Text(row[0], fontSize = 11.sp, fontWeight = FontWeight.Bold, color = textSecondary)
                             }
 
                             // Cell 1: Description
@@ -1978,11 +2453,11 @@ fun SheetsSimulator(viewModel: GoogolViewModel) {
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxHeight()
-                                    .border(0.5.dp, Color(0xFFE8EAED))
+                                    .border(0.5.dp, gridBorder)
                                     .padding(horizontal = 8.dp),
                                 contentAlignment = Alignment.CenterStart
                             ) {
-                                BasicTextField(row[1], onValueChange = { cells[rIdx][1] = it })
+                                BasicTextField(row[1], isDark) { cells[rIdx][1] = it }
                             }
 
                             // Cell 2: Value
@@ -1990,11 +2465,11 @@ fun SheetsSimulator(viewModel: GoogolViewModel) {
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxHeight()
-                                    .border(0.5.dp, Color(0xFFE8EAED))
+                                    .border(0.5.dp, gridBorder)
                                     .padding(horizontal = 8.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
-                                BasicTextField(row[2], onValueChange = { cells[rIdx][2] = it })
+                                BasicTextField(row[2], isDark) { cells[rIdx][2] = it }
                             }
                         }
                     }
@@ -2005,25 +2480,36 @@ fun SheetsSimulator(viewModel: GoogolViewModel) {
 }
 
 @Composable
-fun BasicTextField(value: String, onValueChange: (String) -> Unit) {
+fun BasicTextField(value: String, isDark: Boolean = false, onValueChange: (String) -> Unit) {
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color.DarkGray
     TextField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
         colors = TextFieldDefaults.colors(
+            focusedTextColor = textColor,
+            unfocusedTextColor = textColor,
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),
-        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.DarkGray)
+        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     )
 }
 
 // --- CALENDAR SIMULATOR ---
 @Composable
 fun CalendarSimulator(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFDADCE0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+    val evBg = if (isDark) Color(0xFF1E293B) else Color(0xFFEEF3FC)
+    val evBorder = if (isDark) Color(0xFF334155) else Color(0xFFD3E3FD)
+
     val events = viewModel.calendarEvents
     var title by remember { viewModel.newEventTitle }
     var time by remember { viewModel.newEventTime }
@@ -2038,21 +2524,21 @@ fun CalendarSimulator(viewModel: GoogolViewModel) {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                Text("Simulated Agenda Bookings", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(vertical = 4.dp))
+                Text("Simulated Agenda Bookings", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor, modifier = Modifier.padding(vertical = 4.dp))
             }
 
             items(events) { ev ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEEF3FC)),
+                    colors = CardDefaults.cardColors(containerColor = evBg),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFD3E3FD))
+                    border = BorderStroke(1.dp, evBorder)
                 ) {
                     Row(modifier = Modifier.padding(14.dp)) {
-                        Text(ev.time, fontWeight = FontWeight.Bold, color = Color(0xFF1A73E8), fontSize = 11.sp, modifier = Modifier.width(60.dp))
+                        Text(ev.time, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1A73E8), fontSize = 11.sp, modifier = Modifier.width(60.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(ev.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
-                            Text(ev.desc, fontSize = 11.sp, color = Color.Gray, modifier = Modifier.padding(top = 2.dp))
+                            Text(ev.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textColor)
+                            Text(ev.desc, fontSize = 11.sp, color = textSecondary, modifier = Modifier.padding(top = 2.dp))
                         }
                     }
                 }
@@ -2063,27 +2549,39 @@ fun CalendarSimulator(viewModel: GoogolViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp, bottom = 24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFDADCE0))
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Add Appointment Planner", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF202124))
+                        Text("Add Appointment Planner", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textColor)
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = title,
                             onValueChange = { title = it },
-                            placeholder = { Text("Agenda Title") },
+                            placeholder = { Text("Agenda Title", color = textSecondary) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = if (isDark) Color(0xFF38BDF8) else Color(0xFFEA4335),
+                                unfocusedBorderColor = cardBorder
+                            )
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
                             value = time,
                             onValueChange = { time = it },
-                            placeholder = { Text("Time slot (e.g. 3:30 PM)") },
+                            placeholder = { Text("Time slot (e.g. 3:30 PM)", color = textSecondary) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = if (isDark) Color(0xFF38BDF8) else Color(0xFFEA4335),
+                                unfocusedBorderColor = cardBorder
+                            )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
@@ -2098,7 +2596,7 @@ fun CalendarSimulator(viewModel: GoogolViewModel) {
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Add Agenda Block")
+                            Text("Add Agenda Block", color = Color.White)
                         }
                     }
                 }
@@ -2110,6 +2608,10 @@ fun CalendarSimulator(viewModel: GoogolViewModel) {
 // --- MEET SIMULATOR ---
 @Composable
 fun MeetSimulator(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.Gray
+
     var callActive by remember { viewModel.isMeetActive }
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2145,13 +2647,13 @@ fun MeetSimulator(viewModel: GoogolViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Disconnect call")
+                    Text("Disconnect call", color = Color.White)
                 }
             } else {
-                Text("Googol Meet Virtual Rooms", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Googol Meet Virtual Rooms", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = textColor)
                 Text(
                     "Simulate microphone and streaming visual checks prior to entering the Delaware board meeting.",
-                    color = Color.Gray,
+                    color = textSecondary,
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
@@ -2161,7 +2663,7 @@ fun MeetSimulator(viewModel: GoogolViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A73E8)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Connect meeting")
+                    Text("Connect meeting", color = Color.White)
                 }
             }
         }
@@ -2194,6 +2696,12 @@ fun MeetingWaves() {
 // --- DIAGNOSTIC (Ownership Clarifier Game) ---
 @Composable
 fun DiagnosticScreen(viewModel: GoogolViewModel) {
+    val isDark by remember { viewModel.isDarkMode }
+    val cardBg = if (isDark) Color(0xFF1E293B) else Color.White
+    val cardBorder = if (isDark) Color(0xFF334155) else Color(0xFFDADCE0)
+    val textColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF1E293B)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color.DarkGray
+
     val quizResult by remember { viewModel.diagnosticResult }
     val questionIdx by remember { viewModel.quizQuestionIndex }
     val quizScore by remember { viewModel.quizScore }
@@ -2211,7 +2719,7 @@ fun DiagnosticScreen(viewModel: GoogolViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFC5221F)),
+                colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF7F1D1D) else Color(0xFFC5221F)),
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -2230,15 +2738,15 @@ fun DiagnosticScreen(viewModel: GoogolViewModel) {
                     ) {
                         Icon(imageVector = Icons.Default.Warning, contentDescription = "Security Alert", tint = Color(0xFFEA4335), modifier = Modifier.size(64.dp))
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Ready to run diagnosis", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text("3-question certificate analyzer", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(vertical = 4.dp))
+                        Text("Ready to run diagnosis", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = textColor)
+                        Text("3-question certificate analyzer", color = textSecondary, fontSize = 12.sp, modifier = Modifier.padding(vertical = 4.dp))
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.diagnosticResult.value = "testing"; viewModel.quizQuestionIndex.value = 0; viewModel.quizScore.value = 0 },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5221F)),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFFEF4444) else Color(0xFFC5221F)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Initiate Delaware Audit")
+                            Text("Initiate Delaware Audit", color = Color.White)
                         }
                     }
                 }
@@ -2248,29 +2756,37 @@ fun DiagnosticScreen(viewModel: GoogolViewModel) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, Color(0xFFDADCE0))
+                        border = BorderStroke(1.dp, cardBorder)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("QUESTION ${questionIdx + 1} OF ${viewModel.quizQuestions.size}", color = Color(0xFFEA4335), fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp)
+                            Text("QUESTION ${questionIdx + 1} OF ${viewModel.quizQuestions.size}", color = if (isDark) Color(0xFFF87171) else Color(0xFFEA4335), fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(question.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF202124))
+                            Text(question.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 question.options.forEachIndexed { optIdx, option ->
+                                    val buttonBg = if (selectedAns == optIdx) {
+                                        if (isDark) Color(0xFFEF4444) else Color(0xFFEA4335)
+                                    } else {
+                                        if (isDark) Color(0xFF334155) else Color(0xFFF1F3F4)
+                                    }
+                                    val buttonTextCol = if (selectedAns == optIdx) {
+                                        Color.White
+                                    } else {
+                                        if (isDark) Color(0xFFF8FAFC) else Color(0xFF3C4043)
+                                    }
                                     Button(
                                         onClick = { viewModel.answerQuizQuestion(optIdx) },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (selectedAns == optIdx) Color(0xFFEA4335) else Color(0xFFF1F3F4)
-                                        ),
+                                        colors = ButtonDefaults.buttonColors(containerColor = buttonBg),
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
                                         Text(
                                             option,
-                                            color = if (selectedAns == optIdx) Color.White else Color(0xFF3C4043),
+                                            color = buttonTextCol,
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 12.sp
                                         )
@@ -2289,14 +2805,14 @@ fun DiagnosticScreen(viewModel: GoogolViewModel) {
                         Text("DIAGNOSIS: NOT THE OWNER", fontWeight = FontWeight.Bold, color = Color(0xFFEA4335), fontSize = 16.sp)
                         Text(
                             "Audit checks indicate you hold exactly 0 voting shares of Delaware stock. Standard guest rules apply. Please contact Sundar Pichai's rejection queue for appeals.",
-                            color = Color.DarkGray,
+                            color = textSecondary,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.resetQuiz() }, colors = ButtonDefaults.buttonColors(containerColor = Color.Black)) {
-                            Text("Re-Audit")
+                        Button(onClick = { viewModel.resetQuiz() }, colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF334155) else Color.Black)) {
+                            Text("Re-Audit", color = Color.White)
                         }
                     }
                 }
@@ -2309,14 +2825,14 @@ fun DiagnosticScreen(viewModel: GoogolViewModel) {
                         Text("DIAGNOSIS: CLOSE ENOUGH (PERHAPS A DESK?)", fontWeight = FontWeight.Bold, color = Color(0xFFFBBC05), fontSize = 16.sp)
                         Text(
                             "You matched positive indices on office setup requirements (like using IKEA desks), but our databases confirm zero formal stock authorization. Keep saving pocket funds!",
-                            color = Color.DarkGray,
+                            color = textSecondary,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.resetQuiz() }, colors = ButtonDefaults.buttonColors(containerColor = Color.Black)) {
-                            Text("Re-Audit")
+                        Button(onClick = { viewModel.resetQuiz() }, colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF334155) else Color.Black)) {
+                            Text("Re-Audit", color = Color.White)
                         }
                     }
                 }
@@ -2329,14 +2845,14 @@ fun DiagnosticScreen(viewModel: GoogolViewModel) {
                         Text("DIAGNOSIS: SIGNATURE FOUND (CEO MODE)", fontWeight = FontWeight.Bold, color = Color(0xFF34A853), fontSize = 16.sp)
                         Text(
                             "You hold billions of voting stocks. Please verify identity at corporate Delaware headquarters to confirm ownership!",
-                            color = Color.DarkGray,
+                            color = textSecondary,
                             fontSize = 12.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.resetQuiz() }, colors = ButtonDefaults.buttonColors(containerColor = Color.Black)) {
-                            Text("Dismiss")
+                        Button(onClick = { viewModel.resetQuiz() }, colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF334155) else Color.Black)) {
+                            Text("Dismiss", color = Color.White)
                         }
                     }
                 }
@@ -2865,16 +3381,31 @@ fun GoogolLetter(char: String, color: Color) {
 }
 
 @Composable
-fun TabFilterButton(label: String, selected: Boolean, onClick: () -> Unit) {
+fun TabFilterButton(label: String, selected: Boolean, isDark: Boolean = false, onClick: () -> Unit) {
+    val containerBg = if (selected) {
+        if (isDark) Color(0xFF38BDF8) else Color(0xFF1A73E8)
+    } else {
+        if (isDark) Color(0xFF1E293B) else Color(0xFFE8F0FE)
+    }
+    val contentColor = if (selected) {
+        if (isDark) Color(0xFF0F172A) else Color.White
+    } else {
+        if (isDark) Color(0xFF38BDF8) else Color(0xFF1A73E8)
+    }
+    val cardBorder = if (selected) {
+        Color.Transparent
+    } else {
+        if (isDark) Color(0xFF334155) else Color(0xFFD3E3FD)
+    }
+
     Card(
         modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) Color(0xFF1A73E8) else Color(0xFFE8F0FE)
-        )
+        colors = CardDefaults.cardColors(containerColor = containerBg),
+        border = BorderStroke(1.dp, cardBorder)
     ) {
         Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-            Text(label, color = if (selected) Color.White else Color(0xFF1A73E8), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(label, color = contentColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         }
     }
 }
