@@ -100,7 +100,7 @@ class GoogolViewModel : ViewModel() {
     private val _activeGSuiteApp = MutableStateFlow(GSuiteApp.NONE)
     val activeGSuiteApp: StateFlow<GSuiteApp> = _activeGSuiteApp.asStateFlow()
 
-    // Real System Settings Values (satisfying "replace it with real settings" and "make it less fucking bright")
+    // Real System Settings Values (satisfying "replace it with real settings" and "make it less bright")
     var isDarkMode = mutableStateOf(true) // Defaults to true to make it eye-safe on start!
     var safeSearchMode = mutableStateOf("Strict") // Options: Strict, Moderate, Off
     var searchRegion = mutableStateOf("Delaware Sandbox") // Options: United States, Delaware Sandbox, International
